@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="community_enterprise_theme_lite_pr.HomeMenu">
+        <div class="o_home_menu" t-ref="root" t-att-style="backgroundImageStyle">
+
+            <!-- Search Container (Appears in middle/top when Spacebar or typing starts - Enterprise Style) -->
+            <div t-if="state.isSearchVisible or isSearching" class="o_home_menu_search_container">
+                <div class="o_home_menu_search">
+                    <i class="fa fa-search o_search_icon"/>
+                    <input
+                        type="text"
+                        class="o_menu_search_input"
+                        placeholder="Search apps and menus..."
+                        t-ref="searchInput"
+                        t-model="state.inputText"
+                        t-on-input="onSearchInput"
+                        t-on-keydown="onKeydown"
+                        role="combobox"
+                        aria-autocomplete="list"
+                        aria-haspopup="listbox"
+                        autocomplete="off"
+                        autocorrect="off"
+                        capitalize="off"
+                        spellcheck="false"
+                    />
+                    <button t-if="state.inputText"
+                            class="btn btn-link o_search_clear p-0 border-0"
+                            type="button"
+                            t-on-click="clearSearch"
+                            title="Clear search">
+                        <i class="fa fa-times"/>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Scrollable Content Area -->
+            <div class="o_home_menu_scrollable" t-ref="scrollable">
+
+                <!-- DEFAULT VIEW: All Apps Grid (when not searching) -->
+                <t t-if="!isSearching">
+                    <div t-if="displayedApps.length" class="o_apps">
+                        <t t-foreach="displayedApps" t-as="app" t-key="app.id">
+                            <a class="o_app"
+                               role="button"
+                               tabindex="0"
+                               t-att-class="{ 'active': state.focusedIndex === app_index }"
+                               t-att-href="app.href"
+                               t-on-mousemove="() => this.onItemHover(app_index)"
+                               t-on-keydown="(ev) => this.onItemKeydown(ev, app)"
+                               t-on-click.prevent="() => this.onItemClicked(app)">
+                                <div class="o_app_icon_container">
+                                    <img t-if="app.webIconData"
+                                         t-att-src="app.webIconData"
+                                         class="o_app_icon"
+                                         loading="lazy"
+                                         t-att-alt="app.label"/>
+                                    <div t-elif="app.webIcon"
+                                         class="o_app_icon_default"
+                                         t-attf-style="background-color: {{app.webIcon.backgroundColor}}">
+                                        <i t-att-class="app.webIcon.iconClass"
+                                           t-attf-style="color: {{app.webIcon.color}}"/>
+                                    </div>
+                                    <div t-else=""
+                                         class="o_app_icon_default"
+                                         style="background-color: #875A7B;">
+                                        <i class="fa fa-th-large" style="color: #ffffff;"/>
+                                    </div>
+                                </div>
+                                <div class="o_app_name" t-esc="app.label"/>
+                            </a>
+                        </t>
+                    </div>
+                </t>
+
+                <!-- SEARCH RESULTS VIEW: Filtered Apps + Menu Items -->
+                <t t-else="">
+                    <div class="o_home_menu_search_results">
+
+                        <!-- Matching Apps Section -->
+                        <div t-if="displayedApps.length" class="o_menu_search_section mb-4">
+                            <div class="o_menu_search_section_title mb-3">
+                                <span>Apps</span>
+                            </div>
+                            <div class="o_apps">
+                                <t t-foreach="displayedApps" t-as="app" t-key="app.id">
+                                    <a class="o_app"
+                                       role="button"
+                                       tabindex="0"
+                                       t-att-class="{ 'active': state.focusedIndex === app_index }"
+                                       t-att-href="app.href"
+                                       t-on-mousemove="() => this.onItemHover(app_index)"
+                                       t-on-keydown="(ev) => this.onItemKeydown(ev, app)"
+                                       t-on-click.prevent="() => this.onItemClicked(app)">
+                                        <div class="o_app_icon_container">
+                                            <img t-if="app.webIconData"
+                                                 t-att-src="app.webIconData"
+                                                 class="o_app_icon"
+                                                 loading="lazy"
+                                                 t-att-alt="app.label"/>
+                                            <div t-elif="app.webIcon"
+                                                 class="o_app_icon_default"
+                                                 t-attf-style="background-color: {{app.webIcon.backgroundColor}}">
+                                                <i t-att-class="app.webIcon.iconClass"
+                                                   t-attf-style="color: {{app.webIcon.color}}"/>
+                                            </div>
+                                            <div t-else=""
+                                                 class="o_app_icon_default"
+                                                 style="background-color: #875A7B;">
+                                                <i class="fa fa-th-large" style="color: #ffffff;"/>
+                                            </div>
+                                        </div>
+                                        <div class="o_app_name">
+                                            <t t-foreach="app.labelSegments" t-as="seg" t-key="seg_index">
+                                                <span t-att-class="seg.match ? 'o_menu_search_match' : ''" t-esc="seg.text"/>
+                                            </t>
+                                        </div>
+                                    </a>
+                                </t>
+                            </div>
+                        </div>
+
+                        <!-- Matching Menu Items Section -->
+                        <div t-if="displayedMenuItems.length" class="o_menu_search_section">
+                            <div class="o_menu_search_section_title mb-2">
+                                <span>Menu Items</span>
+                            </div>
+                            <div class="o_menu_search_list">
+                                <t t-foreach="displayedMenuItems" t-as="item" t-key="item.id">
+                                    <a class="o_menu_search_item"
+                                       role="button"
+                                       tabindex="0"
+                                       t-att-class="{ 'active': state.focusedIndex === getItemFlatIndex(item_index) }"
+                                       t-att-href="item.href"
+                                       t-on-mousemove="() => this.onItemHover(this.getItemFlatIndex(item_index))"
+                                       t-on-keydown="(ev) => this.onItemKeydown(ev, item)"
+                                       t-on-click.prevent="() => this.onItemClicked(item)">
+                                        <div class="o_menu_search_item_icon">
+                                            <img t-if="item.webIconData"
+                                                 t-att-src="item.webIconData"
+                                                 class="o_menu_item_icon_img"
+                                                 loading="lazy"
+                                                 t-att-alt="item.label"/>
+                                            <div t-elif="item.webIcon"
+                                                 class="o_menu_item_icon_def"
+                                                 t-attf-style="background-color: {{item.webIcon.backgroundColor}}">
+                                                <i t-att-class="item.webIcon.iconClass"
+                                                   t-attf-style="color: {{item.webIcon.color}}"/>
+                                            </div>
+                                            <div t-else=""
+                                                 class="o_menu_item_icon_def"
+                                                 style="background-color: #875A7B;">
+                                                <i class="fa fa-th-large" style="color: #ffffff;"/>
+                                            </div>
+                                        </div>
+                                        <div class="o_menu_search_item_content">
+                                            <div t-if="item.parentsStr" class="o_menu_search_item_parents">
+                                                <t t-foreach="item.parentSegments" t-as="pseg" t-key="pseg_index">
+                                                    <span t-att-class="pseg.match ? 'o_menu_search_match' : ''" t-esc="pseg.text"/>
+                                                </t>
+                                            </div>
+                                            <div class="o_menu_search_item_label">
+                                                <t t-foreach="item.labelSegments" t-as="lseg" t-key="lseg_index">
+                                                    <span t-att-class="lseg.match ? 'o_menu_search_match' : ''" t-esc="lseg.text"/>
+                                                </t>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </t>
+                            </div>
+                        </div>
+
+                        <!-- No Results State -->
+                        <div t-if="!displayedApps.length and !displayedMenuItems.length" class="o_no_result text-center py-5">
+                            <i class="fa fa-search fa-3x text-muted mb-3 opacity-50"/>
+                            <h5 class="text-muted fw-normal">No menu found for "<span class="fw-bold" t-esc="state.inputText"/>"</h5>
+                        </div>
+
+                    </div>
+                </t>
+
+            </div>
+        </div>
+    </t>
+
+</templates>
